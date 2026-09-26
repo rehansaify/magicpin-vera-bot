@@ -44,11 +44,11 @@ def _inr(n) -> str:
 
 
 def _pct(x, signed: bool = True) -> str:
-    """0.38 -> '+38%' ; -0.3 -> '-30%'."""
+    """0.38 -> '+38%' ; -0.3 -> '-30%'. Non-numeric input -> '' (omit, never render None)."""
     try:
         v = float(x) * 100
     except (TypeError, ValueError):
-        return str(x)
+        return ""
     v = round(v)
     if signed:
         return f"{v:+d}%"
@@ -482,8 +482,9 @@ def c_renewal_due(b: Bundle):
         f" What it did lately: {_num(views)} views and {calls} calls in 30 days on your listing."
         if views is not None else ""
     )
+    renew_s = f" renews in {days} days" if days is not None else ""
     body = (
-        f"{b.greeting()} — admin note: your {plan} plan renews in {days} days{amount_s}.{value_s} "
+        f"{b.greeting()} — admin note: your {plan} plan{renew_s}{amount_s}.{value_s} "
         f"If the numbers look right, renew as-is; if you want the usage report first, I'll compile it in one page. "
         f"Want the renewal summary? {b.style['cta_verb']}."
     )
@@ -491,7 +492,7 @@ def c_renewal_due(b: Bundle):
         b, body, "binary",
         "Renewal trigger: deadline + exact amount, justified with the merchant's own performance numbers, "
         "offered a usage report to keep it non-pushy. Binary CTA.",
-        "renewal", [b.owner(), f"{days} days", amount or plan],
+        "renewal", [b.owner(), f"{days} days" if days is not None else "renewal due", amount or plan],
     )
 
 
@@ -569,8 +570,9 @@ def c_competitor_opened(b: Bundle):
         counter = f" Your {mine[0]} doesn't need to move."
     alt = next((t for t in catalog if "consult" in t.lower() or "free" in t.lower()), "")
     alt_s = f" Counter with substance instead — e.g. lead with \"{alt}\" from the category playbook." if alt else ""
+    dist_s = f" {dist} km away" if dist is not None else ""
     body = (
-        f"{b.greeting()} — market intel: {name} opened {dist} km away{opened_s}"
+        f"{b.greeting()} — market intel: {name} opened{dist_s}{opened_s}"
         + (f", promoting \"{their}\"" if their else "")
         + f".{counter}{alt_s} A price war is a losing game for an established practice; your record is the moat. "
         f"Want a 3-line 'why we're worth it' post for your listing? {b.style['cta_verb']}."
@@ -700,8 +702,9 @@ def c_ipl_match(b: Bundle):
         )
     combo_s = f" The category's \"{combo}\" pattern is built for exactly this." if combo else ""
     keep = f" Your {mine[0]} keeps its own schedule untouched." if mine else ""
+    at_s = (f" at {venue}" if venue else "") + (f", {city}" if city else "")
     body = (
-        f"{b.owner()} — match-day read: {match} at {venue}, {city}{', tonight' if is_weeknight else ''}. "
+        f"{b.owner()} — match-day read: {match}{at_s}{', tonight' if is_weeknight else ''}. "
         f"{angle}{combo_s}{keep} Want the 3-line delivery banner drafted? {b.style['cta_verb']} — live in 10 minutes."
     )
     return _act(
@@ -730,8 +733,9 @@ def c_festival(b: Bundle):
         rat = "Festival trigger far out: resisted the fake-urgency promo, framed early prep as the smart move, " \
               "anchored on the category's bridal/festival pattern. Checklist CTA."
     else:
+        days_s = f" is {days} days away" if days is not None else ""
         body = (
-            f"{b.owner()} — {fest} is {days} days away{when}. Peak booking window is open right now; listings with "
+            f"{b.owner()} — {fest}{days_s}{when}. Peak booking window is open right now; listings with "
             f"fresh festival offers capture the early searches. Want a festival offer line drafted from your catalog? "
             f"{b.style['cta_verb']}."
         )
@@ -832,7 +836,7 @@ def _regional_greeting(customer) -> str:
 def c_recall_due(b: Bundle):
     cust = b.customer or {}
     name = (cust.get("identity") or {}).get("name", "there")
-    due = re.sub(r"(\d+) month", r"-month", (b.p.get("service_due") or "recall").replace("_", " "))
+    due = re.sub(r"(\d+) month", r"\1-month", (b.p.get("service_due") or "recall").replace("_", " "))
     slots = b.p.get("available_slots") or []
     price_offer = next((t for t in b.active_offer_titles() if _price_of(t) is not None), "")
     price_s = f" at the listed {price_offer}" if price_offer else ""
@@ -1223,12 +1227,12 @@ def classify_reply(text: str, verbatim_count: int, auto_marker: bool):
         return "auto_wait"
     if verbatim_count == 1 and auto_marker:
         return "auto_probe"
+    if OBJECTION_PAT.search(text):
+        return "objection"
     if COMMIT_PENT_PAT.search(text):
         return "commit"
     if OFF_TOPIC_PAT.search(text):
         return "off_topic"
-    if OBJECTION_PAT.search(text):
-        return "objection"
     if QUESTION_PAT.search(text):
         return "question"
     return "engage"

@@ -218,6 +218,8 @@ class Handler(BaseHTTPRequestHandler):
             candidates.sort(key=lambda c: (-(c[2].get("urgency") or 0), c[0]))
             global CONV_SEQ
             for idx, tid, trg, sk in candidates:
+                if FIRED_SUPPRESSIONS.get(sk):
+                    continue  # same-tick duplicate suppression key: higher-priority candidate already fired it
                 mid = trg.get("merchant_id") or ""
                 is_customer = trg.get("scope") == "customer" and trg.get("customer_id")
                 if not is_customer:
