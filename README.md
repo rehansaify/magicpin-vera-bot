@@ -44,8 +44,12 @@ python bot.py            # listens on :8080 (or: PORT=9000 python bot.py)
 python local_test.py     # 69 checks: warmup, idempotency, all 25 triggers, replays, adaptive injection
 ```
 
-To run the **official** judge (needs your LLM key): edit `LLM_PROVIDER` / `LLM_API_KEY` / `BOT_URL` at the top of
-`judge_simulator.py`, then `python judge_simulator.py`.
+To run the **official** judge (needs your LLM key): set `BOT_URL` / `LLM_PROVIDER` / `LLM_MODEL` at the top of
+`judge_simulator.py`, export your key first (`export LLM_API_KEY="..."` then `python judge_simulator.py`) — the key
+is never stored in the file. `SIM_NOW` (default `2026-04-26T10:30:00Z`) pins the simulated tick clock to the
+dataset's era, matching the documented judge behavior (testing-brief §2.2/§4 — the judge advances *simulated*
+time); set `SIM_NOW=""` to use the real UTC clock. `POST /v1/teardown` the bot before each judge run so
+suppression/auto-reply/conversation state starts clean.
 
 ## Deploy (pick one)
 

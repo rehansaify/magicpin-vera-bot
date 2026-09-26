@@ -20,23 +20,33 @@ Author: magicpin AI Challenge Team
 # ██████  CONFIGURATION - EDIT THIS SECTION ██████
 # =============================================================================
 
+import os  # configuration below reads environment variables
+
 # Your bot's URL (where your bot is running)
-BOT_URL = "http://localhost:8080"
+BOT_URL = "https://magicpin-vera-bot-ibgk.onrender.com"
 
 # Choose your LLM provider: "openai", "anthropic", "gemini", "deepseek", "groq", "ollama", "openrouter"
-LLM_PROVIDER = "openai"
+LLM_PROVIDER = "gemini"
 
-# Your API key (paste your key here)
-LLM_API_KEY = ""  # <-- PUT YOUR API KEY HERE
+# Your API key — read from the environment; never paste it into this file.
+#   Git Bash:    export LLM_API_KEY="..."  &&  python judge_simulator.py
+#   PowerShell:  $env:LLM_API_KEY="..."    ;   python judge_simulator.py
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
-LLM_MODEL = ""  # <-- Optional: specify model or leave empty for default
+LLM_MODEL = "gemini-3.8-flash"  # <-- Optional: specify model or leave empty for default
 
 # For Ollama only: local server URL
 OLLAMA_URL = "http://localhost:11434"
 
 # Which test to run by default
-TEST_SCENARIO = "all"
+TEST_SCENARIO = "full_evaluation"
+
+# Simulated clock sent as /v1/tick's "now". The real judge advances SIMULATED
+# time (challenge-testing-brief.md §2.2/§4) and the seed dataset's triggers
+# expire Apr-Jun 2026, so this defaults to the dataset's evaluation era.
+# Override via the SIM_NOW env var; set SIM_NOW="" to use the real UTC clock.
+SIM_NOW = os.environ.get("SIM_NOW", "2026-04-26T10:30:00Z")
 
 # =============================================================================
 # ██████  END OF CONFIGURATION - DON'T EDIT BELOW THIS LINE ██████
@@ -422,8 +432,9 @@ class BotClient:
         })
 
     def tick(self, triggers):
+        now = SIM_NOW or (datetime.utcnow().isoformat() + "Z")
         return self._request("POST", "/v1/tick", 15, {
-            "now": datetime.utcnow().isoformat() + "Z", "available_triggers": triggers
+            "now": now, "available_triggers": triggers
         })
 
     def reply(self, conv_id, merchant_id, message, turn):

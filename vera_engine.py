@@ -406,7 +406,7 @@ def c_perf_spike(b: Bundle):
 
 def c_perf_dip(b: Bundle):
     metric = b.p.get("metric", "calls")
-    delta = _pct(b.p.get("delta_pct", 0))
+    delta = _pct(abs(b.p.get("delta_pct") or 0), signed=False)
     base = b.p.get("vs_baseline")
     base_s = f" (baseline was {_num(base)})" if base is not None else ""
     fix = ""
@@ -431,7 +431,7 @@ def c_perf_dip(b: Bundle):
 
 def c_seasonal_perf_dip(b: Bundle):
     metric = b.p.get("metric", "views")
-    delta = _pct(b.p.get("delta_pct", 0))
+    delta = _pct(abs(b.p.get("delta_pct") or 0), signed=False)
     note = _humanize_note(b.p.get("season_note") or "the usual seasonal window")
     members = b.cust_agg("total_active_members") or b.cust_agg("total_unique_ytd")
     keep = f"your {members} existing members" if members else "your existing base"
