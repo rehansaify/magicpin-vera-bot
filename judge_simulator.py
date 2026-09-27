@@ -26,7 +26,7 @@ import os  # configuration below reads environment variables
 BOT_URL = "https://magicpin-vera-bot-ibgk.onrender.com"
 
 # Choose your LLM provider: "openai", "anthropic", "gemini", "deepseek", "groq", "ollama", "openrouter"
-LLM_PROVIDER = "gemini"
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini")
 
 # Your API key — read from the environment; never paste it into this file.
 #   Git Bash:    export LLM_API_KEY="..."  &&  python judge_simulator.py
@@ -34,7 +34,7 @@ LLM_PROVIDER = "gemini"
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
 
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
-LLM_MODEL = "gemini-3.8-flash"  # <-- Optional: specify model or leave empty for default
+LLM_MODEL = os.environ.get("LLM_MODEL", "gemini-3.8-flash")  # <-- Optional: specify model or leave empty for default
 
 # For Ollama only: local server URL
 OLLAMA_URL = "http://localhost:11434"
@@ -58,6 +58,8 @@ import json
 import time
 import re
 import socket
+
+import requests  # GroqProvider uses requests (urllib gets blocked by Cloudflare 1010)
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Tuple
@@ -277,14 +279,15 @@ class GroqProvider(LLMProvider):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        req = urlrequest.Request(
+        resp = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
-            data=json.dumps({"model": self.model, "messages": messages,
-                            "temperature": 0.2, "max_tokens": 1500}).encode("utf-8"),
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            json={"model": self.model, "messages": messages,
+                  "temperature": 0.2, "max_tokens": 1500},
+            timeout=TIMEOUT_LLM
         )
-        resp = urlrequest.urlopen(req, timeout=TIMEOUT_LLM)
-        data = json.loads(resp.read().decode("utf-8"))
+        resp.raise_for_status()
+        data = resp.json()
         return data["choices"][0]["message"]["content"]
 
 
