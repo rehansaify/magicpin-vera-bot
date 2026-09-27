@@ -1,0 +1,16 @@
+name: Keep Render Bot Alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping health endpoint
+        run: |
+          curl --fail --max-time 20 \
+            "${{ secrets.BOT_URL }}/v1/healthz"
