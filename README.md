@@ -239,11 +239,11 @@ Submit to magicpin:
 
 ## Pre-submission checklist
 
-- [ ] Production URL responds
-- [ ] `/v1/healthz` returns 200 with context counts
-- [ ] `/v1/metadata` returns team identity
-- [ ] `POST /v1/context`, `/v1/tick`, `/v1/reply` behave per contract
-- [ ] `python local_test.py` passes locally
-- [ ] `python local_test.py https://magicpin-vera-bot-ibgk.onrender.com` passes against production
-- [ ] No API keys committed to git
-- [ ] GitHub Actions keepalive configured (`BOT_URL` secret set, workflow runs green)
+- [x] Production URL responds
+- [x] `/v1/healthz` returns 200 with context counts
+- [x] `/v1/metadata` returns team identity
+- [x] `POST /v1/context`, `/v1/tick`, `/v1/reply` behave per contract
+- [x] `python local_test.py` passes locally
+- [x] `python local_test.py https://magicpin-vera-bot-ibgk.onrender.com` passes against production
+- [x] No API keys committed to git
+- [x] GitHub Actions keepalive configured (`BOT_URL` secret set, workflow runs green)
